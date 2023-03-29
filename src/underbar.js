@@ -212,8 +212,8 @@
     // if collection is undefined, return empty array
     // if iterator is not defined, return collection
     // iterate over the collection
-      // for each element, call iterator on element
-      // push to result array
+    // for each element, call iterator on element
+    // push to result array
     // return result array
 
     var result = [];
@@ -273,25 +273,58 @@
   //   }); // should be 5, regardless of the iterator function passed in
   //          No accumulator is given so the first element is used.
 
-// I - collection (array or object), iterator (function), accumulator (running primitive value) -- (optional for first pass)
-// O - accumulator
-// C - none
-// E - collection is not defined, iterator is not defined (n/a)
+  // I - collection (array or object), iterator (function), accumulator (running primitive value) -- (optional for first pass)
+  // O - accumulator
+  // C - none
+  // E - collection is not defined, iterator is not defined (n/a)
 
-//check if an initial value was passed in for accumulator assign boolean value to a variable hasAccum
+  //check if an initial value was passed in for accumulator assign boolean value to a variable hasAccum
   // if it was not, set accumulator to the first element
 
-// check if collection is an array
+  // check if collection is an array
   // if it is, iterate over the array using standard for loop
-    // if hasAccum,iterate from 0
-    // else, iterate from 1
-    // call iterator on collection[i] and add result to accumulator
-//if it is not an array and it is an object
+  // if hasAccum,iterate from 0
+  // else, iterate from 1
+  // call iterator on collection[i] and add result to accumulator
+  //if it is not an array and it is an object
   // iterate over the object using for ... in loop
   // call iterator on collection[key] and add result to accumulator
 
 
   _.reduce = function(collection, iterator, accumulator) {
+
+    console.log('accumulator not passed in: ', accumulator === undefined);
+    if (Array.isArray(collection)) {
+      if (accumulator !== undefined) {
+        for (var i = 0; i < collection.length; i++) {
+          var val = iterator(accumulator, collection[i]);
+          if (val !== undefined) {
+            accumulator = val;
+          }
+        }
+      } else {
+        accumulator = collection[0];
+        console.log('accumulator before loop: ', accumulator);
+        for (var i = 1; i < collection.length; i++) {
+          console.log('i: ', i, 'collection[i]: ', collection[i]);
+          var val = iterator(accumulator, collection[i]);
+          console.log('val: ', val);
+          if (val !== undefined) {
+            accumulator = val;
+          }
+        }
+      }
+    } else if (typeof collection === 'object') {
+      for (var key in collection) {
+        var val = iterator(accumulator, collection[key]);
+        if (val !== undefined) {
+          accumulator = val;
+        }
+      }
+    }
+
+    console.log('accumulator end: ', accumulator);
+    return accumulator;
 
   };
 
