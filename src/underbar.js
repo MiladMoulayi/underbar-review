@@ -176,12 +176,10 @@
   _.uniq = function(array, isSorted, iterator) {
     var result = [];
     var unique = new Set();
-    console.log('iterator is defined: ', iterator !== undefined);
     if (iterator !== undefined) {
       for (var i = 0; i < array.length; i++) {
         unique.add(iterator(array[i]));
       }
-      console.log('unique after first for loop: ', unique);
       for (var j = 0; j < array.length; j++) {
         if (unique.has(iterator(array[j]))) {
           result.push(array[j]);
@@ -194,7 +192,6 @@
       }
 
       for (var item of unique) {
-        console.log('item: ', item);
         result.push(item);
       }
     }
@@ -293,39 +290,18 @@
 
   _.reduce = function(collection, iterator, accumulator) {
 
-    console.log('accumulator not passed in: ', accumulator === undefined);
-    if (Array.isArray(collection)) {
-      if (accumulator !== undefined) {
-        for (var i = 0; i < collection.length; i++) {
-          var val = iterator(accumulator, collection[i]);
-          if (val !== undefined) {
-            accumulator = val;
-          }
-        }
+    var initializing = arguments.length === 2;
+
+    _.each(collection, function(value) {
+      if (initializing) {
+        accumulator = value;
+        initializing = false;
       } else {
-        accumulator = collection[0];
-        console.log('accumulator before loop: ', accumulator);
-        for (var i = 1; i < collection.length; i++) {
-          console.log('i: ', i, 'collection[i]: ', collection[i]);
-          var val = iterator(accumulator, collection[i]);
-          console.log('val: ', val);
-          if (val !== undefined) {
-            accumulator = val;
-          }
-        }
+        accumulator = iterator(accumulator, value);
       }
-    } else if (typeof collection === 'object') {
-      for (var key in collection) {
-        var val = iterator(accumulator, collection[key]);
-        if (val !== undefined) {
-          accumulator = val;
-        }
-      }
-    }
+    });
 
-    console.log('accumulator end: ', accumulator);
     return accumulator;
-
   };
 
   // Determine if the array or object contains a given value (using `===`).
@@ -344,12 +320,19 @@
   // Determine whether all of the elements match a truth test.
   _.every = function(collection, iterator) {
     // TIP: Try re-using reduce() here.
+    iterator = iterator || _.identity;
+    return !!_.reduce(collection, function(trueSoFar, value) {
+      return trueSoFar && iterator(value);
+    }, true);
   };
 
   // Determine whether any of the elements pass a truth test. If no iterator is
   // provided, provide a default one
   _.some = function(collection, iterator) {
-    // TIP: There's a very clever way to re-use every() here.
+    iterator = iterator || _.identity;
+    return !_.every(collection, function(value) {
+      return !iterator(value);
+    });
   };
 
 
@@ -372,11 +355,25 @@
   //     bla: "even more stuff"
   //   }); // obj1 now contains key1, key2, key3 and bla
   _.extend = function(obj) {
+    _.each(arguments, function(source) {
+      _.each(source, function(value, key) {
+        obj[key] = value;
+      });
+    });
+
+    return obj;
   };
 
   // Like extend, but doesn't ever overwrite a key that already
   // exists in obj
   _.defaults = function(obj) {
+    _.each(arguments, function(source) {
+      _.each(source, function(value, key) {
+        obj[key] === undefined && (obj[key] = value);
+      });
+    });
+
+    return obj;
   };
 
 
@@ -420,6 +417,15 @@
   // already computed the result for the given argument and return that value
   // instead if possible.
   _.memoize = function(func) {
+    var results = {};
+
+    return function() {
+      var argsKey = JSON.stringify(arguments);
+      if (!results[argsKey]) {
+        results[argsKey] = func.apply(this, arguments);
+      }
+      return results[argsKey];
+    }
   };
 
   // Delays a function for the given number of milliseconds, and then calls
@@ -429,6 +435,10 @@
   // parameter. For example _.delay(someFunction, 500, 'a', 'b') will
   // call someFunction('a', 'b') after 500ms
   _.delay = function(func, wait) {
+    var args = Array.prototype.slice.call(arguments, 2);
+    return setTimeout(function() {
+      func.apply(this, args);
+    }, wait);
   };
 
 
@@ -443,6 +453,14 @@
   // input array. For a tip on how to make a copy of an array, see:
   // http://mdn.io/Array.prototype.slice
   _.shuffle = function(array) {
+    var shuffled = array.slice();
+    for (var i = shuffled.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var temp = shuffled[i];
+      shuffled[i] = shuffled[j];
+      shuffled[j] = temp;
+    }
+    return shuffled;
   };
 
 
@@ -457,6 +475,10 @@
   // Calls the method named by functionOrKey on each value in the list.
   // Note: You will need to learn a bit about .apply to complete this.
   _.invoke = function(collection, functionOrKey, args) {
+    return _.map(collection, function(item) {
+      var method = typeof functionOrKey === 'string' ? item[functionOrKey] : functionOrKey;
+      return method.apply(item, args);
+    });
   };
 
   // Sort the object's values by a criterion produced by an iterator.
